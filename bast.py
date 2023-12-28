@@ -75,7 +75,7 @@ class Block(Stmt):
     def __init__(self, ln: int, col: int, stmts: list[Stmt]):
         super().__init__(ln, col)
         self.stmts = stmts
-        
+
     def check(self, scope: Scope) -> Type | None:
         ret_type = None
         for stmt in self.stmts:
@@ -209,3 +209,9 @@ class FuncDef(Stmt):
         register_name = self.name + " " + ' '.join(map(str, self.param_types))
         scope.funcs[register_name] = (self.ret_type, Func(self.params, self.body, scope))
         return
+
+
+class Const(Expr):
+    def __init__(self, ln: int, col: int, val: Any):
+        super().__init__(ln, col)
+        self.val = val
