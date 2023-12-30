@@ -5,17 +5,16 @@ from berror import BLexerError
 
 
 class Token(NamedTuple):
-    ln: int
-    col: int
     tp: TokenType
     val: Any = None
+    pos: tuple[int, int] | None = None
 
 
 class Lexer:
     def __init__(self, code: str):
         self.code = code
         self.pos = 0
-        self.ln, self.col = 1, 1
+        self.vpos = (1, 1)
 
     def eof(self, n: int = 0):
         return self.pos + n >= len(self.code)
@@ -31,10 +30,9 @@ class Lexer:
             if self.eof():
                 break
             if self.cur() == '\n':
-                self.ln += 1
-                self.col = 1
+                self.vpos = (self.vpos[0] + 1, 1)
             else:
-                self.col += 1
+                self.vpos = (self.vpos[0], self.vpos[1] + 1)
 
     def skip(self):
         while not self.eof() and (self.cur() in ' \n\t' or
@@ -47,8 +45,7 @@ class Lexer:
                 while not self.eof() and self.get(2) != '*/':
                     self.next()
                 if self.eof():
-                    raise BLexerError(self.ln, self.col,
-                                      "unexpected EOF in a long comment")
+                    raise BLexerError("unexpected EOF in a long comment", self.vpos)
                 self.next(2)
             else:
                 self.next()
@@ -57,7 +54,7 @@ class Lexer:
         self.skip()
 
         if self.eof():
-            return Token(self.ln, self.col, TokenType.EOF)
+            return Token(TokenType.EOF, self.vpos)
         elif self.cur().isdigit():
             num = self.cur()
             self.next()
@@ -66,12 +63,11 @@ class Lexer:
                 num += self.cur()
                 self.next()
             if num.count('.') == 1:
-                return Token(self.ln, self.col, TokenType.CONST, float(num))
+                return Token(TokenType.CONST, float(num), self.vpos)
             elif num.count('.') > 1:
-                raise BLexerError(self.ln, self.col,
-                                  "too many dots in a number")
+                raise BLexerError("too many dots in a number", self.vpos)
             else:
-                return Token(self.ln, self.col, TokenType.CONST, int(num))
+                return Token(TokenType.CONST, int(num), self.vpos)
         elif self.cur().isalpha() or self.cur() == '_':
             ident = self.cur()
             self.next()
@@ -80,15 +76,15 @@ class Lexer:
                 ident += self.cur()
                 self.next()
             if ident in keyword_map:
-                return Token(self.ln, self.col, keyword_map[ident])
+                return Token(keyword_map[ident], self.vpos)
             elif ident == 'True':
-                return Token(self.ln, self.col, TokenType.CONST, True)
+                return Token(TokenType.CONST, True, self.vpos)
             elif ident == 'False':
-                return Token(self.ln, self.col, TokenType.CONST, False)
+                return Token(TokenType.CONST, False, self.vpos)
             elif ident == 'None':
-                return Token(self.ln, self.col, TokenType.CONST, None)
+                return Token(TokenType.CONST, None, self.vpos)
             else:
-                return Token(self.ln, self.col, TokenType.IDENT, ident)
+                return Token(TokenType.IDENT, ident, self.vpos)
         elif self.cur() in '\'"':
             x = self.cur()
             self.next()
@@ -97,46 +93,38 @@ class Lexer:
                 if self.cur() == '\\':
                     self.next()
                     if self.eof():
-                        raise BLexerError(self.ln, self.col,
-                                          "unexpected EOF in a string")
+                        raise BLexerError("unexpected EOF in a string", self.vpos)
                     elif self.cur() in escape_map:
                         string += escape_map[self.cur()]
                         self.next()
                     elif self.cur() == 'x':
                         self.next()
                         if self.eof(2):
-                            raise BLexerError(
-                                self.ln, self.col,
-                                "unexpected EOF in a string")
+                            raise BLexerError("unexpected EOF in a string", self.vpos)
                         string += chr(int(self.get(2), 16))
                         self.next(2)
                     elif self.cur() == 'u':
                         self.next()
                         if self.eof(4):
-                            raise BLexerError(
-                                self.ln, self.col,
-                                "unexpected EOF in a string")
+                            raise BLexerError("unexpected EOF in a string", self.vpos)
                         string += chr(int(self.get(4), 16))
                         self.next(4)
                     else:
-                        raise BLexerError(self.ln, self.col,
-                                          "wrong escape sequence")
+                        raise BLexerError("wrong escape sequence", self.vpos)
                 else:
                     string += self.cur()
                     self.next()
             if self.eof():
-                raise BLexerError(self.ln, self.col,
-                                  "unexpected EOF in a string")
+                raise BLexerError("unexpected EOF in a string", self.vpos)
             self.next()
-            return Token(self.ln, self.col, TokenType.CONST, string)
+            return Token(TokenType.CONST, string, self.vpos)
         elif not self.eof(2) and self.get(2) in op_map:
-            op = op_map[self.get(2)]
+            op = self.get(2)
             self.next(2)
-            return Token(self.ln, self.col, op)
+            return Token(op_map[op], op, self.vpos)
         elif self.cur() in op_map:
-            op = op_map[self.cur()]
+            op = self.cur()
             self.next()
-            return Token(self.ln, self.col, op)
+            return Token(op_map[op], op, self.vpos)
         else:
-            raise BLexerError(self.ln, self.col,
-                              "unexpected character '{}'".format(self.cur()))
+            raise BLexerError("unexpected character '{}'".format(self.cur()), self.vpos)

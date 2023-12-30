@@ -1,7 +1,6 @@
 from enum import Enum, unique
 
 
-# noinspection SpellCheckingInspection
 @unique
 class TokenType(Enum):
     EOF = 0
