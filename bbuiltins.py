@@ -15,6 +15,10 @@ def binary_operator(tp: TypeDetail, op: str):
     return lambda a, b: Value(tp, getattr(a, op)(b))
 
 
+def unary_operator(tp: TypeDetail, op: str):
+    return lambda a: Value(tp, getattr(a, op)())
+
+
 Bool = TypeDetail('Bool', {}, {}, [])
 Int = TypeDetail('Int', {}, {}, [])
 Int.method['operator init '] = (BasicType('Int'), operator_init(Int, 0))
@@ -23,7 +27,7 @@ Int.method['operator init String'] = (BasicType('Int'), lambda a: Value(Int, int
 Int.method['operator+ this Int'] = (BasicType('Int'), binary_operator(Int, '__add__'))
 Int.method['operator- this Int'] = (BasicType('Int'), binary_operator(Int, '__sub__'))
 Int.method['operator* this Int'] = (BasicType('Int'), binary_operator(Int, '__mul__'))
-Int.method['operator/ this Int'] = (BasicType('Int'), binary_operator(Int, '__div__'))
+Int.method['operator/ this Int'] = (BasicType('Int'), binary_operator(Int, '__truediv__'))
 Int.method['operator% this Int'] = (BasicType('Int'), binary_operator(Int, '__mod__'))
 Int.method['operator== this Bool'] = (BasicType('Bool'), binary_operator(Bool, '__eq__'))
 Int.method['operator!= this Bool'] = (BasicType('Bool'), binary_operator(Bool, '__ne__'))
@@ -33,6 +37,12 @@ Int.method['operator>= this Bool'] = (BasicType('Bool'), binary_operator(Bool, '
 Int.method['operator<= this Bool'] = (BasicType('Bool'), binary_operator(Bool, '__le__'))
 Int.method['operator<< this Int'] = (BasicType('Int'), binary_operator(Int, '__lshift__'))
 Int.method['operator>> this Int'] = (BasicType('Int'), binary_operator(Int, '__rshift__'))
+Int.method['operator& this Int'] = (BasicType('Int'), binary_operator(Int, '__and__'))
+Int.method['operator| this Int'] = (BasicType('Int'), binary_operator(Int, '__or__'))
+Int.method['operator^ this Int'] = (BasicType('Int'), binary_operator(Int, '__xor__'))
+Int.method['operator+ this'] = (BasicType('Int'), unary_operator(Int, '__pos__'))
+Int.method['operator- this'] = (BasicType('Int'), unary_operator(Int, '__neg__'))
+Int.method['operator~ this'] = (BasicType('Int'), unary_operator(Int, '__invert__'))
 
 std_scope = Scope(None)
 
