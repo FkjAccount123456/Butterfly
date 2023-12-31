@@ -31,16 +31,22 @@ class BasicType(Type):
 
 # 没错，一阶段不支持列表
 # 等支持了泛型再说
-'''class ListType(Type):
+"""class ListType(Type):
     def __init__(self, base: Type):
         self.base = base
 
     def __eq__(self, other) -> bool:
-        return isinstance(other, ListType) and self.base == other.base'''
+        return isinstance(other, ListType) and self.base == other.base"""
 
 
 class TypeDetail:
-    def __init__(self, name: str, methods: dict[str, "FuncDetail"], attrs: dict, parents: list["TypeDetail"]):
+    def __init__(
+        self,
+        name: str,
+        methods: dict[str, "FuncDetail"],
+        attrs: dict,
+        parents: list["TypeDetail"],
+    ):
         # method的格式： 名称 参数类型列表 : (返回值, 主体)
         # 可恶，为什么时隔一年半还要用这种方式实现重载！
         # parents：继承一切+隐式转换
@@ -52,7 +58,7 @@ class TypeDetail:
         if "operator init " in self.method:
             return self.method["operator init "][1](newobj)
         return newobj
-    
+
     def getAttrs(self) -> dict:
         res = {}
         for i in self.parents:
@@ -70,7 +76,7 @@ class TypeDetail:
             if i.hasMethod(name):
                 return True
         return False
-    
+
     def getMethod(self, name: str):
         if name in self.method:
             return self.method[name]
@@ -78,7 +84,7 @@ class TypeDetail:
             if i.hasMethod(name):
                 return i.getMethod(name)
         raise BTypeError(f"undefined method '{name}'")
-    
+
     def toType(self):
         return self.name
 

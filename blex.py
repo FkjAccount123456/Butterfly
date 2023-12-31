@@ -23,26 +23,25 @@ class Lexer:
         return self.code[self.pos]
 
     def get(self, n: int = 1):
-        return self.code[self.pos: self.pos + n]
+        return self.code[self.pos : self.pos + n]
 
     def next(self, n: int = 1):
         for _ in range(n):
             if self.eof():
                 break
-            if self.cur() == '\n':
+            if self.cur() == "\n":
                 self.vpos = (self.vpos[0] + 1, 1)
             else:
                 self.vpos = (self.vpos[0], self.vpos[1] + 1)
 
     def skip(self):
-        while not self.eof() and (self.cur() in ' \n\t' or
-                                  self.get(2) in ('//', '/*')):
-            if self.get(2) == '//':
-                while not self.eof() and self.cur() != '\n':
+        while not self.eof() and (self.cur() in " \n\t" or self.get(2) in ("//", "/*")):
+            if self.get(2) == "//":
+                while not self.eof() and self.cur() != "\n":
                     self.next()
-            elif self.get(2) == '/*':
+            elif self.get(2) == "/*":
                 self.next(2)
-                while not self.eof() and self.get(2) != '*/':
+                while not self.eof() and self.get(2) != "*/":
                     self.next()
                 if self.eof():
                     raise BLexerError("unexpected EOF in a long comment", self.vpos)
@@ -58,52 +57,50 @@ class Lexer:
         elif self.cur().isdigit():
             num = self.cur()
             self.next()
-            while not self.eof() and (self.cur().isdigit() or
-                                      self.cur() == '.'):
+            while not self.eof() and (self.cur().isdigit() or self.cur() == "."):
                 num += self.cur()
                 self.next()
-            if num.count('.') == 1:
+            if num.count(".") == 1:
                 return Token(TokenType.CONST, float(num), self.vpos)
-            elif num.count('.') > 1:
+            elif num.count(".") > 1:
                 raise BLexerError("too many dots in a number", self.vpos)
             else:
                 return Token(TokenType.CONST, int(num), self.vpos)
-        elif self.cur().isalpha() or self.cur() == '_':
+        elif self.cur().isalpha() or self.cur() == "_":
             ident = self.cur()
             self.next()
-            while not self.eof() and (
-                    self.cur().isalnum() or self.cur() == '_'):
+            while not self.eof() and (self.cur().isalnum() or self.cur() == "_"):
                 ident += self.cur()
                 self.next()
             if ident in keyword_map:
                 return Token(keyword_map[ident], self.vpos)
-            elif ident == 'True':
+            elif ident == "True":
                 return Token(TokenType.CONST, True, self.vpos)
-            elif ident == 'False':
+            elif ident == "False":
                 return Token(TokenType.CONST, False, self.vpos)
-            elif ident == 'None':
+            elif ident == "None":
                 return Token(TokenType.CONST, None, self.vpos)
             else:
                 return Token(TokenType.IDENT, ident, self.vpos)
-        elif self.cur() in '\'"':
+        elif self.cur() in "'\"":
             x = self.cur()
             self.next()
             string = ""
             while not self.eof() and self.cur() != x:
-                if self.cur() == '\\':
+                if self.cur() == "\\":
                     self.next()
                     if self.eof():
                         raise BLexerError("unexpected EOF in a string", self.vpos)
                     elif self.cur() in escape_map:
                         string += escape_map[self.cur()]
                         self.next()
-                    elif self.cur() == 'x':
+                    elif self.cur() == "x":
                         self.next()
                         if self.eof(2):
                             raise BLexerError("unexpected EOF in a string", self.vpos)
                         string += chr(int(self.get(2), 16))
                         self.next(2)
-                    elif self.cur() == 'u':
+                    elif self.cur() == "u":
                         self.next()
                         if self.eof(4):
                             raise BLexerError("unexpected EOF in a string", self.vpos)
