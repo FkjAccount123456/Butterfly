@@ -300,3 +300,21 @@ class UnaryOp(Expr):
             return val.tp.getMethod(opname)[1](val)
         opname = "operator" + op + " " + str(val.tp.toType())
         return scope.findFunc(opname)[1](val)
+
+
+class FuncCall(Expr):
+    def __init__(self, pos: tuple[int, int], func: str, args: list[Expr]):
+        super().__init__(pos)
+        self.func, self.args = func, args
+
+    def check(self, scope: Scope) -> Type:
+        args = [i.check(scope) for i in self.args]
+        funcname = self.func + " " + " ".join(map(str, args))
+        func = scope.findFunc(funcname)
+        return func[0]
+    
+    def visit(self, scope: Scope) -> Value:
+        args = [i.visit(scope) for i in self.args]
+        arg_types = [i.tp.toType() for i in args]
+        funcname = self.func + " " + " ".join(arg_types)
+        return scope.findFunc(funcname)[1](args)
