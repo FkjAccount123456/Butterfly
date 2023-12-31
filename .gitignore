@@ -5,3 +5,4 @@ venv/
 *.un~
 *~
 tags
+__pycache__/
