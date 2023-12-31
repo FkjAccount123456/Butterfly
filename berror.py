@@ -7,11 +7,13 @@ class BException(Exception):
         if not self.msg:
             if self.pos:
                 return "{} at line {}, column {}.".format(
-                    type(self).__name__[1:], *self.pos)
+                    type(self).__name__[1:], *self.pos
+                )
             return "{}.".format(type(self).__name__[1:])
         if self.pos:
             return "{} at line {}, column {}: {}.".format(
-                type(self).__name__[1:], *self.pos, self.msg)
+                type(self).__name__[1:], *self.pos, self.msg
+            )
         return "{}: {}.".format(type(self).__name__[1:], self.msg)
 
 

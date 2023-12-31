@@ -115,7 +115,9 @@ class ExprStmt(Stmt):
 
 
 class VarDecl(Stmt):
-    def __init__(self, pos: tuple[int, int] | None, vardecls: list[tuple[str, Type, Expr]]):
+    def __init__(
+        self, pos: tuple[int, int] | None, vardecls: list[tuple[str, Type, Expr]]
+    ):
         super().__init__(pos)
         self.vardecls = vardecls
 
@@ -139,7 +141,12 @@ class VarDecl(Stmt):
 
 
 class If(Stmt):
-    def __init__(self, pos: tuple[int, int] | None, cases: list[tuple[Expr, Block]], default: Block):
+    def __init__(
+        self,
+        pos: tuple[int, int] | None,
+        cases: list[tuple[Expr, Block]],
+        default: Block,
+    ):
         super().__init__(pos)
         self.cases, self.default = cases, default
 
@@ -189,16 +196,33 @@ class While(Stmt):
 
 
 class FuncDef(Stmt):
-    def __init__(self, pos: tuple[int, int] | None, name: str, params: list[str], param_types: list[Type], ret_type: Type, body: Block):
+    def __init__(
+        self,
+        pos: tuple[int, int] | None,
+        name: str,
+        params: list[str],
+        param_types: list[Type],
+        ret_type: Type,
+        body: Block,
+    ):
         super().__init__(pos)
-        self.name, self.params, self.param_types, self.ret_type, self.body = name, params, param_types, ret_type, body
+        self.name, self.params, self.param_types, self.ret_type, self.body = (
+            name,
+            params,
+            param_types,
+            ret_type,
+            body,
+        )
 
     def check(self, scope: Scope) -> Type | None:
         for param_type in self.param_types:
             if isinstance(param_type, BasicType):
                 scope.findType(param_type.name)
-        register_name = self.name + " " + ' '.join(map(str, self.param_types))
-        scope.funcs[register_name] = (self.ret_type, Func(self.params, self.body, scope))
+        register_name = self.name + " " + " ".join(map(str, self.param_types))
+        scope.funcs[register_name] = (
+            self.ret_type,
+            Func(self.params, self.body, scope),
+        )
         check_scope = Scope(scope)
         check_scope.variables = dict(zip(self.params, self.param_types))
         ret_type = self.body.check(check_scope)
@@ -207,8 +231,11 @@ class FuncDef(Stmt):
         return
 
     def visit(self, scope: Scope) -> RunSignal | None:
-        register_name = self.name + " " + ' '.join(map(str, self.param_types))
-        scope.funcs[register_name] = (self.ret_type, Func(self.params, self.body, scope))
+        register_name = self.name + " " + " ".join(map(str, self.param_types))
+        scope.funcs[register_name] = (
+            self.ret_type,
+            Func(self.params, self.body, scope),
+        )
         return
 
 
@@ -220,22 +247,22 @@ class Const(Expr):
     def check(self, scope: Scope) -> Type:
         tp = type(self.val).__name__
         return {
-            'int': BasicType('Int'),
-            'float': BasicType('Float'),
-            'bool': BasicType('Bool'),
-            'str': BasicType('String'),
+            "int": BasicType("Int"),
+            "float": BasicType("Float"),
+            "bool": BasicType("Bool"),
+            "str": BasicType("String"),
         }[tp]
-    
+
     def visit(self, scope: Scope) -> Value:
         tp = type(self.val).__name__
         tp = {
-            'int': 'Int',
-            'float': 'Float',
-            'bool': 'Bool',
-            'str': 'String',
+            "int": "Int",
+            "float": "Float",
+            "bool": "Bool",
+            "str": "String",
         }[tp]
         return Value(scope.findType(tp), self.val)
-    
+
 
 class Variable(Expr):
     def __init__(self, pos: tuple[int, int] | None, name: str):
@@ -244,10 +271,10 @@ class Variable(Expr):
 
     def check(self, scope: Scope) -> Type:
         return scope.findVar(self.name)
-    
+
     def visit(self, scope: Scope) -> Value:
         return scope.findVar(self.name)
-    
+
 
 class BinaryOp(Expr):
     def __init__(self, pos: tuple[int, int] | None, op: str, left: Expr, right: Expr):
@@ -273,9 +300,11 @@ class BinaryOp(Expr):
         opname = "operator" + op + " this " + str(right.tp.toType())
         if left.tp.hasMethod(opname):
             return left.tp.getMethod(opname)[1](left, right)
-        opname = "operator" + op + " " + str(left.tp.toType()) + " " + str(right.tp.toType)
+        opname = (
+            "operator" + op + " " + str(left.tp.toType()) + " " + str(right.tp.toType)
+        )
         return scope.findFunc(opname)[1](left, right)
-    
+
 
 class UnaryOp(Expr):
     def __init__(self, pos: tuple[int, int], op: str, val: Expr):
@@ -291,7 +320,7 @@ class UnaryOp(Expr):
             return val_detail.getMethod(opname)[0]
         opname = "operator" + op + " " + str(val)
         return scope.findFunc(opname)[0]
-    
+
     def visit(self, scope: Scope) -> Value:
         op = self.op
         val = self.val.visit(scope)
@@ -312,7 +341,7 @@ class FuncCall(Expr):
         funcname = self.func + " " + " ".join(map(str, args))
         func = scope.findFunc(funcname)
         return func[0]
-    
+
     def visit(self, scope: Scope) -> Value:
         args = [i.visit(scope) for i in self.args]
         arg_types = [i.tp.toType() for i in args]
